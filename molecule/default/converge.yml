@@ -1,0 +1,7 @@
+---
+- name: Converge
+  hosts: all
+  tasks:
+    - name: "Include ansible-role-bind9"
+      include_role:
+        name: "ansible-role-bind9"
