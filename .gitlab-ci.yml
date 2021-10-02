@@ -43,7 +43,6 @@ before_script:
   - python3 -m pip install -r requirements.txt
   - ansible --version
   - molecule --version
-  - curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sh
 
 test:
   image: docker:stable-dind
@@ -91,6 +90,7 @@ galaxy:
     BADGE_IMAGE_URL_GALAXY_SCORE: "https://img.shields.io/ansible/quality/$GALAXY_ROLE_ID"
     GITLAB_API_BADGE_ENDPOINT: "https://gitlab.example.com/api/v4/projects/:id/badges"
   script: |
+    curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sh
     echo "Ansible Galaxy contains role $GALAXY_ROLE_FULLNAME with id=$GALAXY_ROLE_ID"
     echo "GALAXY_ROLE_FULLNAME=$GALAXY_ROLE_FULLNAME" >> galaxy.env
     echo "GALAXY_ROLE_ID=$GALAXY_ROLE_ID" >> galaxy.env
