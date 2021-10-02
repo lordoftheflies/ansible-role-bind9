@@ -45,6 +45,13 @@ test:
 #     paths:
 #       - dist/*.whl
 
+publish:
+  script:
+    - "ANSIBLE_GALAXY_NAME = $(echo \"$CI_PROJECT_ROOT_NAMESPACE.$CI_PROJECT_NAME\" | tr '-' '_')"
+    - "ansible-galaxy info $ANSIBLE_GALAXY_NAME | grep -E 'id: [0-9]' | awk {'print $2'}"
+  allow_failure: true
+
+
 pages:
   script:
     - pip install -r requirements-doc.txt
