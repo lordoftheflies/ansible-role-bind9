@@ -2,11 +2,13 @@
 
 - name: Install DNS Servers
   hosts: ns_servers
+  gather_facts: true
   tasks:
     - name: Testing role
       include_role:
         name: ansible-role-bind9
     - name: install master zones
+      become: true
       copy:
         src: example.org.zone
         dest: /etc/named/masters/

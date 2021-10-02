@@ -8,18 +8,30 @@ platforms:
     groups:
       - ns_servers
     source:
-      alias: 'centos/7/amd64'
-    image: 'centos:7.6.1810'
+      alias: 'ubuntu/1804/amd64'
+    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu1804-ansible:latest'
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    pre_build_image: false
   - name: ansible-test-ns2
     groups:
       - ns_servers
     source:
-      alias: 'centos/7/amd64'
-    image: 'centos:7.6.1810'
+      alias: 'ubuntu/1804/amd64'
+    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu1804-ansible:latest'
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    pre_build_image: false
   - name: ansible-test-outside
     source:
-      alias: 'centos/7/amd64'
-    image: 'centos:7.6.1810'
+      alias: 'ubuntu/1804/amd64'
+    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu1804-ansible:latest'
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:ro
+    privileged: true
+    pre_build_image: false
 lint: |
   set -e
   yamllint .
@@ -28,13 +40,15 @@ lint: |
 #flake8
 provisioner:
   name: ansible
-  options:
-    vvv: True
   config_options:
     defaults:
-      interpreter_python: auto_silent
+      remote_user: root
+      become_user: root
+      no_log: false
       callback_whitelist: junit, profile_tasks, timer, yaml
-    ssh_connection:
-      pipelining: false
+      interpreter_python: auto_silent
+    #  roles_path: "../../../"
+    # ssh_connection:
+    #   pipelining: false
 verifier:
   name: ansible

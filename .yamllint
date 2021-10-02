@@ -3,8 +3,10 @@
 extends: default
 
 ignore: |
-  molecule/
-  .venv/
+  /molecule/
+  /.tox/
+  /.venv/
+  /.github/
 rules:
   braces:
     max-spaces-inside: 1
@@ -33,4 +35,6 @@ rules:
   new-lines:
     type: unix
   trailing-spaces: disable
-  truthy: disable
+  truthy:
+    allowed-values: ["yes", "no", "true", "false", "True", "False"]
+    level: error

@@ -2,9 +2,11 @@
 package_list:
   - python3
   - python3-pip
+  - firewalld
   - bind9
-  - bind9utils
+  - bind9-utils
   - bind9-host
+  - dnsutils
 service_name: bind9
 conf_dir: /etc/bind
 main_conffile: "{{ conf_dir }}/named.conf"
@@ -13,4 +15,4 @@ generated_data_dir: "{{ data_dir }}"
 dynamic_data_dir: "{{ data_dir }}"
 base_includes:
   - /etc/bind/named.conf.default-zones
-dns_usergroup: bind
+dns_usergroup: sudo

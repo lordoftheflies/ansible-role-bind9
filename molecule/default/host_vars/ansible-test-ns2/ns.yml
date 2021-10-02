@@ -3,7 +3,7 @@ server_groups:
   ns1:
     ips:
       - "{{ hostvars['ansible-test-ns1'].ansible_default_ipv4.address }}"
-      - "{{ hostvars['ansible-test-ns1'].ansible_default_ipv6.address }}"
+      #- "{{ hostvars['ansible-test-ns1'].ansible_default_ipv6.address }}"
 slave_zones:
   'example.org':
     master_groups:
