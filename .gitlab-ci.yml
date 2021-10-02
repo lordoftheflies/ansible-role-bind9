@@ -46,16 +46,30 @@ test:
 #     paths:
 #       - dist/*.whl
 
+
+
+
+pages:
+  script:
+    - pip install -r requirements-doc.txt
+    - cd doc ; make html
+    - mv build/html/ ../public/
+  artifacts:
+    paths:
+      - public
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
 publish:
   variables:
     GALAXY_ROLE_NAME: $(echo "$CI_PROJECT_NAME" | tr '-' '_')
-    GALAXY_ROLE_FULLNAME: "$GITLAB_USER_NAME.$GALAXY_ROLE_NAME"
+    GALAXY_ROLE_FULLNAME: "$GITLAB_USER_LOGIN.$GALAXY_ROLE_NAME"
     GALAXY_ROLE_ID: "ansible-galaxy info $ANSIBLE_GALAXY_NAME | grep -E 'id: [0-9]' | awk {'print $2'}"
-    BADGE_LINK_URL_GALAXY_ROLE: https://galaxy.ansible.com/$GITLAB_USER_NAME/$GALAXY_ROLE_NAME
+    BADGE_LINK_URL_GALAXY_ROLE: https://galaxy.ansible.com/$GITLAB_USER_LOGIN/$GALAXY_ROLE_NAME
     BADGE_IMAGE_URL_GALAXY_ROLE: "https://img.shields.io/ansible/role/$GALAXY_ROLE_ID"
-    BADGE_LINK_URL_GALAXY_DOWNLOADS: https://galaxy.ansible.com/$GITLAB_USER_NAME/$GALAXY_ROLE_NAME
+    BADGE_LINK_URL_GALAXY_DOWNLOADS: https://galaxy.ansible.com/$GITLAB_USER_LOGIN/$GALAXY_ROLE_NAME
     BADGE_IMAGE_URL_GALAXY_DOWNLOADS: "https://img.shields.io/ansible/role/d/$GALAXY_ROLE_ID"
-    BADGE_LINK_URL_GALAXY_SCORE: https://galaxy.ansible.com/$GITLAB_USER_NAME/$GALAXY_ROLE_NAME
+    BADGE_LINK_URL_GALAXY_SCORE: https://galaxy.ansible.com/$GITLAB_USER_LOGIN/$GALAXY_ROLE_NAME
     BADGE_IMAGE_URL_GALAXY_SCORE: "https://img.shields.io/ansible/quality/$GALAXY_ROLE_ID"
     GITLAB_API_BADGE_ENDPOINT: "https://gitlab.example.com/api/v4/projects/:id/badges"
   script: |
@@ -70,15 +84,3 @@ publish:
   artifacts:
     reports:
       dotenv: galaxy.env
-
-
-pages:
-  script:
-    - pip install -r requirements-doc.txt
-    - cd doc ; make html
-    - mv build/html/ ../public/
-  artifacts:
-    paths:
-      - public
-  rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
