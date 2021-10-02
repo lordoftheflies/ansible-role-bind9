@@ -12,4 +12,3 @@ dynamic_data_dir: "{{ data_dir }}"
 base_includes:
   - /etc/bind/named.conf.default-zones
 dns_usergroup: bind
-

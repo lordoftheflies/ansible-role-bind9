@@ -82,4 +82,3 @@
     cron_file: "dnssec_rfc7344_update"
     state: absent
   when: _dnssec_children_zones | length == 0
-

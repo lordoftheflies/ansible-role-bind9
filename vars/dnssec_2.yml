@@ -16,4 +16,3 @@ _dnssec_policy_defaults:
   #'signatures-validity-dnskey':
   #'zone-propagation-delay':
 _dnssec_policy: "{{ _dnssec_policy_defaults | combine(dnssec_policy|default({}))  }}"
-

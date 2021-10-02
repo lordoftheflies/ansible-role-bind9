@@ -97,4 +97,3 @@
         - Restart apparmor -- bind9
         - restart DNS system
   when: _bind_version is version_compare('9.16', '>=')
-

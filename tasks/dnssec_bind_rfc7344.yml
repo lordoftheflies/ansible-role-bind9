@@ -22,4 +22,3 @@
   set_fact:
     _dnssec_children_zones: "{{ _dnssec_children_zones | union([item + '.' + parent_zone.key]) }}"
   loop: "{{ parent_zone.value.dnssec_children }}"
-

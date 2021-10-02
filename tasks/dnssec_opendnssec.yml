@@ -9,4 +9,3 @@
     mode: "{{ item.1 }}"
   loop:
     - ["{{ conf_dir }}/masters/signed", '0750']
-

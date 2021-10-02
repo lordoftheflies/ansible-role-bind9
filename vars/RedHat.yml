@@ -12,4 +12,3 @@ base_includes:
   - /etc/named.rfc1912.zones
   - /etc/named.root.key
 dns_usergroup: named
-

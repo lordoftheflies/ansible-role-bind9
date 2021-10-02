@@ -2,25 +2,28 @@
 # Based on ansible-lint config
 extends: default
 
+ignore: |
+  molecule/
+  .venv/
 rules:
   braces:
     max-spaces-inside: 1
-    level: error
+    level: warning
   brackets:
     max-spaces-inside: 1
-    level: error
+    level: warning
   colons:
     max-spaces-after: -1
-    level: error
+    level: warning
   commas:
     max-spaces-after: -1
-    level: error
+    level: warning
   comments: disable
   comments-indentation: disable
   document-start: disable
   empty-lines:
     max: 3
-    level: error
+    level: warning
   hyphens:
     level: error
   indentation: disable

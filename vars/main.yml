@@ -30,4 +30,3 @@ options_defaults:
   transfers-per-ns: "7"
   version: '"not currently available"'
   zone-statistics: "no"
-

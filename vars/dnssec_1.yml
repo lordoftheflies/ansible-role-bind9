@@ -19,4 +19,3 @@ _dnssec_params_defaults:
     zsk: 0
   coverage: '1y'
 _dnssec_params: "{{ _dnssec_params_defaults | combine(dnssec_params|default({}))  }}"
-

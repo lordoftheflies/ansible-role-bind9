@@ -51,7 +51,9 @@ test:
   script:
     - pip install -r requirements-test.txt
     - molecule test
-
+  artifacts:
+    reports:
+      junit: reports/*_test-result.xml
 # run:
 #   script:
 #     - python setup.py bdist_wheel
@@ -61,9 +63,6 @@ test:
 #   artifacts:
 #     paths:
 #       - dist/*.whl
-
-
-
 
 pages:
   stage: publish
