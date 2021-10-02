@@ -8,8 +8,8 @@ platforms:
     groups:
       - ns_servers
     source:
-      alias: 'ubuntu/1804/amd64'
-    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu1804-ansible:latest'
+      alias: 'ubuntu/2004/amd64'
+    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu2004-ansible:latest'
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
@@ -18,16 +18,16 @@ platforms:
     groups:
       - ns_servers
     source:
-      alias: 'ubuntu/1804/amd64'
-    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu1804-ansible:latest'
+      alias: 'ubuntu/2004/amd64'
+    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu2004-ansible:latest'
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
     pre_build_image: false
   - name: ansible-test-outside
     source:
-      alias: 'ubuntu/1804/amd64'
-    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu1804-ansible:latest'
+      alias: 'ubuntu/2004/amd64'
+    image: 'registry.gitlab.com/cherubits/automation/images/docker-ubuntu2004-ansible:latest'
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:ro
     privileged: true
@@ -48,7 +48,7 @@ provisioner:
       callback_whitelist: junit, profile_tasks, timer, yaml
       interpreter_python: auto_silent
     #  roles_path: "../../../"
-    # ssh_connection:
-    #   pipelining: false
+    ssh_connection:
+      pipelining: false
 verifier:
   name: ansible
