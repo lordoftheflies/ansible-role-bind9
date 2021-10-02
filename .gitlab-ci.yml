@@ -7,8 +7,8 @@
 # Official language image. Look for the different tagged releases at:
 # https://hub.docker.com/r/library/python/tags/
 ---
+image: python:3.8.10
 
-image: docker:stable-dind
 
 services:
   - docker:dind
@@ -30,6 +30,7 @@ cache:
 stages:
   - build
   - test
+  - publish
 
 before_script:
   - apk add --no-cache python3.8.10 python3.8.10-dev py3-pip gcc git curl build-base autoconf automake py3-cryptography linux-headers musl-dev libffi-dev openssl-dev openssh
@@ -42,6 +43,7 @@ before_script:
   - curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sh
 
 test:
+  image: docker:stable-dind
   stage: test
   script:
     - pip install -r requirements-test.txt
@@ -61,7 +63,7 @@ test:
 
 
 pages:
-  stage: build
+  stage: publish
   script:
     - pip install -r requirements-doc.txt
     - cd doc ; make html
@@ -72,8 +74,8 @@ pages:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
-publish:
-  stage: build
+galaxy:
+  stage: publish
   variables:
     GALAXY_ROLE_NAME: $(echo "$CI_PROJECT_NAME" | tr '-' '_')
     GALAXY_ROLE_FULLNAME: "$GITLAB_USER_LOGIN.$GALAXY_ROLE_NAME"
