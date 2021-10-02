@@ -29,7 +29,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install -r requirements.txt
-  - curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sudo sh
+  - curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sh
 
 test:
   script:
