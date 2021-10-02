@@ -1,0 +1,19 @@
+---
+_dnssec_policy_defaults:
+  #'dnskey-ttl':
+  'keys':
+    'ksk': 'key-directory lifetime P1Y algorithm rsasha512 4096'
+    'zsk': 'key-directory lifetime 30d algorithm rsasha512 2048'
+  'max-zone-ttl': PT1H
+  # use NSEC3
+  'nsec3param': 'iterations 5 optout no salt-length 8'
+  #'parent-ds-ttl':
+  #'parent-propagation-delay':
+  #'publish-safety':
+  #'retire-safety':
+  #'signatures-refresh':
+  #'signatures-validity':
+  #'signatures-validity-dnskey':
+  #'zone-propagation-delay':
+_dnssec_policy: "{{ _dnssec_policy_defaults | combine(dnssec_policy|default({}))  }}"
+

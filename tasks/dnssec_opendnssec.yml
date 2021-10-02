@@ -1,0 +1,12 @@
+---
+
+- name: "Create DNSSEC directories"
+  file:
+    path: "{{ item.0 }}"
+    state: directory
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: "{{ item.1 }}"
+  loop:
+    - ["{{ conf_dir }}/masters/signed", '0750']
+

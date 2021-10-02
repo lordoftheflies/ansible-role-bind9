@@ -1,0 +1,100 @@
+---
+
+- name: "Check Bind version requirement for DNSSEC"
+  fail:
+    msg: "Proper inline-signing support requires at least Bind 9.11"
+  when: _bind_version is version_compare('9.11', '<')
+
+- name: "Create DNSSEC directories"
+  file:
+    path: "{{ item.0 }}"
+    state: directory
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: "{{ item.1 }}"
+  loop:
+    - ["{{ conf_dir }}/keys", '0770']
+
+- name: "Configure DNSSEC using dnssec-keymgr"
+  block:
+    - name: "Define DNSSEC parameters"
+      include_vars: dnssec_1.yml
+
+    - name: Check if DNSSEC zone already has keys
+      find:
+        paths: "{{ conf_dir }}/keys"
+        patterns: 'K{{ item.key }}.*.key'
+      loop: "{{ q('dict', master_zones) }}"
+      when: item.value.dnssec|default(False)|bool
+      register: dnssec_zones_keys
+
+    - name: "Generate missing DNSSEC keys"
+      command: "/usr/sbin/dnssec-keymgr -K {{ conf_dir }}/keys {{ item.item.key }}"
+      loop: "{{ dnssec_zones_keys.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"
+      when: not item.skipped|default(False) and item.matched == 0
+      changed_when: True
+      become: True
+      become_user: "{{ dns_usergroup }}"
+      notify: Enable NSEC3 with new DNSSEC keys
+
+    - name: "Generate DNSSEC key management configuration"
+      template:
+        src: dnssec-policy.conf
+        dest: "{{ conf_dir }}/"
+        owner: root
+        group: "{{ dns_usergroup }}"
+        mode: 0644
+
+    - name: "Install crontab for DNSSEC key management"
+      cron:
+        cron_file: "bind_dnssec"
+        user: "{{ dns_usergroup }}"
+        hour: "4"
+        minute: "21"
+        name: "DNSSEC key management"
+        job: "/usr/sbin/dnssec-keymgr -K {{ conf_dir }}/keys >/dev/null"
+  when: _bind_version is version_compare('9.16', '<')
+
+- name: "Configure DNSSEC with dnssec-policy"
+  block:
+    - name: "Fail if using the old DNSSEC parameters"
+      fail:
+      when: dnssec_params is defined
+
+    - name: "Define DNSSEC parameters"
+      include_vars: dnssec_2.yml
+
+    - name: "Remove obsolete DNSSEC key management configuration"
+      file:
+        path: "{{ conf_dir }}/dnssec-policy.conf"
+        state: absent
+
+    - name: "Remove obsolete crontab for DNSSEC key management"
+      cron:
+        cron_file: "bind_dnssec"
+        state: absent
+
+    - name: "Generate DNSSEC configuration"
+      template:
+        src: dnssec.conf
+        dest: "{{ conf_dir }}/"
+        owner: root
+        group: "{{ dns_usergroup }}"
+        mode: 0640
+      notify: restart DNS system
+
+    - name: "Install custom apparmor policy"
+      template:
+        src: usr.sbin.named
+        dest: /etc/apparmor.d/local/
+        owner: root
+        group: root
+        mode: 0640
+      when: ansible_os_family == "Debian"
+      notify:
+        - Restart apparmor -- bind9
+        - restart DNS system
+  when: _bind_version is version_compare('9.16', '>=')
+

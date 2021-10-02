@@ -1,0 +1,15 @@
+---
+package_list:
+  - bind
+  - bind-utils
+service_name: named
+conf_dir: /etc/named
+main_conffile: "/etc/named.conf"
+data_dir: /var/named
+generated_data_dir: "{{ data_dir }}/data"
+dynamic_data_dir: "{{ data_dir }}/dynamic"
+base_includes:
+  - /etc/named.rfc1912.zones
+  - /etc/named.root.key
+dns_usergroup: named
+

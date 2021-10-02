@@ -1,2 +1,33 @@
 ---
-# vars file for ansible-role-bind9
+log_dir: /var/log/named
+options_enforce:
+  directory: '"{{ data_dir }}"'
+  pid-file: '"/run/named/named.pid"'
+  session-keyfile: '"/run/named/session.key"'
+  managed-keys-directory: '"{{ dynamic_data_dir }}"'
+  allow-recursion: "{ localhost; {% for group_name in recursion_allowed_groups | unique %}{{ group_name }}; {% endfor %}}"
+_dnssec_keys_directory: "{{ conf_dir }}/keys"
+options_defaults:
+  allow-query: "{ any; }"
+  allow-transfer: "{ none; }"
+  check-mx-cname: "fail"
+  dnssec-enable: "yes"
+  # ISC DLV are obsolete
+  dnssec-lookaside: "no"
+  dnssec-validation: "auto"
+  dnssec-dnskey-kskonly: "yes"
+  dump-file: '"{{ generated_data_dir }}/cache_dump.db"'
+  empty-zones-enable: "no"
+  key-directory: '"{{ _dnssec_keys_directory }}"'
+  listen-on: "{ any; }"
+  listen-on-v6: "{ any; }"
+  # see https://serverfault.com/questions/690447/bind-servfail-after-upgrade-to-debian-jessie
+  max-recursion-queries: "200"
+  memstatistics-file: '"{{ generated_data_dir }}/named_mem_stats.txt"'
+  notify: "master-only"
+  provide-ixfr: "yes"
+  statistics-file: '"{{ generated_data_dir }}/named_stats.txt"'
+  transfers-per-ns: "7"
+  version: '"not currently available"'
+  zone-statistics: "no"
+

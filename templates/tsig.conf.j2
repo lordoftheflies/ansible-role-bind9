@@ -1,0 +1,22 @@
+# keys
+
+{% for key_name, key_info in keys|dictsort %}
+key {{ key_name }} {
+	algorithm {{ key_info.algorithm }};
+	secret "{{ key_info.secret }}";
+};
+
+{% endfor %}
+
+# key associations
+
+{% for group_name, group_info in server_groups.items() %}
+{% if group_info.key is defined %}
+{% for ip in group_info.ips %}
+server {{ ip }} {
+	keys { {{ group_info.key }}; };
+};
+
+{% endfor %}
+{% endif %}
+{% endfor %}

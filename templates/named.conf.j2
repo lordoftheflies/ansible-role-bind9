@@ -1,0 +1,74 @@
+
+{% set groups_for_masters_1 = slave_zones.values() | sum(attribute='master_groups', start=[]) %}
+{% set groups_for_masters_2 = master_zones.values() | selectattr('notify_groups', 'defined') | sum(attribute='notify_groups', start=[]) %}
+{% set groups_for_masters = (groups_for_masters_1 + groups_for_masters_2) | unique %}
+{% for group_name, group_info in server_groups|dictsort %}
+acl "{{ group_name }}" { {% for ip in group_info.ips %}{{ip.split('%')[0]}}; {% endfor %}};
+{% if group_name in groups_for_masters %}
+masters "{{ group_name }}" { {% for ip in group_info.ips %}{% if '%' in ip %}{{ip|replace('%', ' port ')}}{% else %}{{ip}}{% endif %}; {% endfor %}};
+{% endif %}
+{% endfor %}
+
+
+options {
+{% for opt_key, opt_value in options_defaults|combine(options)|combine(options_enforce)|dictsort %}
+	{{ opt_key }} {{ opt_value }};
+{% endfor %}
+};
+
+logging {
+	channel security_file {
+		file "{{ log_dir }}/security.log" versions 3 size 30m;
+		severity dynamic;
+		print-time yes;
+		print-severity yes;
+		print-category yes;
+	};
+	channel dnssec_file {
+		file "{{ log_dir }}/dnssec.log" versions 3 size 30m;
+		severity dynamic;
+		print-time yes;
+		print-severity yes;
+		print-category yes;
+	};
+	category "security" { security_file; };
+	category "dnssec" { dnssec_file; };
+
+	# logs pollution
+	category "queries" { null; };
+	category "lame-servers" { null; };
+};
+
+
+{% if ansible_os_family == "RedHat" %}
+zone "." IN {
+	type hint;
+	file "named.ca";
+};
+{% endif %}
+
+{% for incfile in base_includes %}
+include "{{ incfile }}";
+{% endfor %}
+{% for incfile in extra_includes %}
+include "{{ incfile }}";
+{% endfor %}
+
+{% if keys %}
+include "{{ conf_dir }}/tsig.conf";
+{% endif %}
+
+{% if dnssec_system == 'bind' and _bind_version is version_compare('9.16', '>=') %}
+include "{{ conf_dir }}/dnssec.conf";
+{% endif %}
+
+{% if master_zones %}
+include "{{ conf_dir }}/master_zones.conf";
+{% endif %}
+{% if slave_zones %}
+include "{{ conf_dir }}/slave_zones.conf";
+{% endif %}
+
+# https://deepthought.isc.org/article/AA-00537/0/Why-does-named-log-error-22-Invalid-argument-quoting-an-IPv6-address-starting-with-fe80%3A-.html
+server fe80::/16 { bogus yes; };
+

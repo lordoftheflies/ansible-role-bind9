@@ -1,0 +1,15 @@
+---
+package_list:
+  - bind9
+  - bind9utils
+  - bind9-host
+service_name: bind9
+conf_dir: /etc/bind
+main_conffile: "{{ conf_dir }}/named.conf"
+data_dir: /var/cache/bind
+generated_data_dir: "{{ data_dir }}"
+dynamic_data_dir: "{{ data_dir }}"
+base_includes:
+  - /etc/bind/named.conf.default-zones
+dns_usergroup: bind
+

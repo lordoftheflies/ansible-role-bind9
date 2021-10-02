@@ -1,2 +1,10 @@
 ---
-# defaults file for ansible-role-bind9
+dnssec_system: opendnssec
+keys: {}
+server_groups: {}
+master_zones: {}
+slave_zones: {}
+recursion_allowed_groups: []
+manage_firewall: True
+extra_includes: []
+options: []

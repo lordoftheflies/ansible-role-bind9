@@ -1,0 +1,22 @@
+---
+_dnssec_params_defaults:
+  algorithm: RSASHA512
+  keyttl: 3600
+  key-size:
+    ksk: 4096
+    zsk: 2048
+  roll-period:
+    ksk: '1y'
+    zsk: '3mo'
+  pre-publish:
+    ksk: '1mo'
+    zsk: '1mo'
+  post-publish:
+    ksk: '1mo'
+    zsk: '1mo'
+  standby:
+    ksk: 0
+    zsk: 0
+  coverage: '1y'
+_dnssec_params: "{{ _dnssec_params_defaults | combine(dnssec_params|default({}))  }}"
+

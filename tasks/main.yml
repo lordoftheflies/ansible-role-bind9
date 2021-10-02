@@ -1,2 +1,139 @@
 ---
-# tasks file for ansible-role-bind9
+
+- name: Load settings based on distribution
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "{{ ansible_distribution }}.yml"
+    - "{{ ansible_os_family }}.yml"
+
+- name: "Install packages"
+  package:
+    name: "{{ package_list }}"
+    state: present
+  when: ansible_os_family != "Debian"
+
+# TODO: remove when Bullseye is out
+- name: "Install packages (Debian)"
+  package:
+    name: "{{ package_list }}"
+    state: present
+    default_release: buster-backports
+  when: ansible_os_family == "Debian"
+
+- name: "Retrieve bind9 version #1"
+  command: "named -version"
+  changed_when: False
+  register: _output_bind_version
+  check_mode: no
+
+- name: "Retrieve bind9 version #2"
+  set_fact:
+    _bind_version: "{{ _output_bind_version['stdout'].split(' ')[1].split('-')[0] }}"
+
+- name: "Retrieve bind9 version #3"
+  debug:
+    msg: "The detected Bind version is: {{ _bind_version }}"
+
+- name: "Create base directories"
+  file:
+    path: "{{ item.0 }}"
+    state: directory
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: "{{ item.1 }}"
+  loop:
+    - ["{{ data_dir }}/masters", '0770']
+    - ["{{ data_dir }}/slaves", '0770']
+    - ["{{ data_dir }}/dssets", '0770']
+    - ["{{ log_dir }}", '0770']
+
+# Bind is not always allowed to create files in /etc
+# in Debian the apparmor policy is against it
+# in RedHat SELinux also probably denies it
+# this affects DNSSEC and also dynamic zones.
+# With this symlink the configuration stays in /etc
+# but files are created/written only in the data directory.
+- name: "Create zones symlinks in data directory"
+  file:
+    src: "{{ conf_dir }}/masters/{{ item }}.zone"
+    path: "{{ data_dir }}/masters/{{ item }}.zone"
+    state: link
+    # the zone file might not be deployed yet
+    force: true
+  # skip dynamic zones
+  when: master_zones[item].update_groups is undefined and master_zones[item].update_policy is undefined
+  loop: "{{ master_zones.keys() | list }}"
+
+- name: generate master zones configuration
+  template:
+    src: master_zones.conf.j2
+    dest: "{{ conf_dir }}/master_zones.conf"
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: 0640
+  when: master_zones | count > 0
+  notify: restart DNS system
+
+- name: remove master zones configuration
+  file:
+    path: "{{ conf_dir }}/master_zones.conf"
+    state: absent
+  when: master_zones | count == 0
+
+- name: generate slave zones configuration
+  template:
+    src: slave_zones.conf.j2
+    dest: "{{ conf_dir }}/slave_zones.conf"
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: 0640
+  when: slave_zones | count > 0
+  notify: restart DNS system
+
+- name: remove slave zones configuration
+  file:
+    path: "{{ conf_dir }}/slave_zones.conf"
+    state: absent
+  when: slave_zones | count == 0
+
+- name: generate TSIG configuration
+  template:
+    src: tsig.conf.j2
+    dest: "{{ conf_dir }}/tsig.conf"
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: 0640
+  when: keys is defined and keys
+  notify: restart DNS system
+
+- include_tasks: dnssec_opendnssec.yml
+  when: dnssec_system == 'opendnssec'
+- include_tasks: dnssec_bind.yml
+  when: dnssec_system == 'bind'
+
+- name: generate main configuration
+  template:
+    src: named.conf.j2
+    dest: "{{ main_conffile }}"
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: 0640
+    validate: "named-checkconf %s"
+  notify: restart DNS system
+
+- name: Enable DNS service
+  service:
+    name: "{{ service_name }}"
+    enabled: yes
+    # do not start yet, so master zones can be installed in playbook tasks, then the handler call would start it
+
+- name: Open firewall for DNS
+  firewalld:
+    service: "{{ item }}"
+    state: enabled
+    permanent: true
+    immediate: true
+  with_items:
+    - dns
+  when: manage_firewall
+

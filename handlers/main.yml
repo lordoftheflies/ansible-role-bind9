@@ -1,2 +1,22 @@
 ---
-# handlers file for ansible-role-bind9
+
+- name: Restart apparmor -- bind9
+  service:
+    name: apparmor
+    state: restarted
+
+- name: restart DNS system
+  service:
+    name: "{{ service_name }}"
+    state: restarted
+
+- name: reload DNS system
+  command: "rndc reload"
+
+- name: "Enable NSEC3 with new DNSSEC keys"
+  command: "rndc signing -nsec3param 1 0 10 auto {{ item.item.key }}"
+  loop: "{{ dnssec_zones_keys.results }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  when: not item.skipped|default(False) and item.matched == 0
+  changed_when: True

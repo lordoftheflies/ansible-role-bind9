@@ -1,0 +1,25 @@
+---
+
+- name: "Create initial dsset for children zones for '{{ parent_zone.key }}'"
+  vars:
+    dsset: "{{ data_dir }}/dssets/{{ item }}.{{ parent_zone.key }}"
+  # may be empty, if so the update script will use the CDS to initialize the delegation
+  shell: "dig +noall +answer {{ item }}.{{ parent_zone.key }} DS >{{ dsset }}"
+  args:
+    creates: "{{ dsset }}"
+  loop: "{{ parent_zone.value.dnssec_children }}"
+
+- name: "Create empty zone delegation include file for '{{ parent_zone.key }}'"
+  copy:
+    content: ""
+    dest: "{{ data_dir }}/masters/{{ parent_zone.key }}.dnssec_children"
+    force: no
+    owner: "{{ dns_usergroup }}"
+    group: root
+    mode: 0644
+
+- name: "Fill-in list of DNSSEC children zones"
+  set_fact:
+    _dnssec_children_zones: "{{ _dnssec_children_zones | union([item + '.' + parent_zone.key]) }}"
+  loop: "{{ parent_zone.value.dnssec_children }}"
+

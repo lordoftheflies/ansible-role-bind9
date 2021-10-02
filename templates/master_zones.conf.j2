@@ -1,0 +1,43 @@
+{% for zone_name, zone_info in master_zones|dictsort %}
+
+zone "{{ zone_name }}" IN {
+	type master;
+{% if zone_info.transfer_groups is defined %}
+{% set key_list = zone_info.transfer_groups | map('extract', server_groups) | selectattr('key', 'defined') | map(attribute='key') %}
+{% set keyless_group_ips = zone_info.transfer_groups | map('extract', server_groups) | selectattr('key', 'undefined') | sum(attribute='ips', start=[]) %}
+	allow-transfer { {% for key in key_list | unique %}key {{ key }}; {% endfor %}{% for ip in keyless_group_ips | unique %}{{ ip }}; {% endfor %}};
+{% endif %}
+{% if zone_info.update_policy is defined %}
+	update-policy { {% for rule in zone_info.update_policy %}{{ rule }}; {% endfor %}};
+{% elif zone_info.update_groups is defined %}
+{% set key_list = zone_info.update_groups | map('extract', server_groups) | selectattr('key', 'defined') | map(attribute='key') %}
+{% set keyless_group_ips = zone_info.update_groups | map('extract', server_groups) | selectattr('key', 'undefined') | sum(attribute='ips', start=[]) %}
+	allow-update { {% for key in key_list | unique %}key {{ key }}; {% endfor %}{% for ip in keyless_group_ips | unique %}{{ ip }}; {% endfor %}};
+{% endif %}
+{% if zone_info.notify_groups is defined %}
+	also-notify { {% for group_name in zone_info.notify_groups | unique %}{{ group_name }}; {% endfor %}};
+{% endif %}
+{% if zone_info.dnssec|default(False)|bool %}
+{% if dnssec_system == 'bind' %}
+	file "{{ data_dir }}/masters/{{ zone_name }}.zone";
+{% if _bind_version is version_compare('9.16', '<') %}
+	inline-signing yes;
+	auto-dnssec maintain;
+{% elif zone_info.dnssec_policy|default('') == "insecure" %}
+	dnssec-secure-to-insecure yes;
+{% if _bind_version is version_compare('9.16.11', '>=') %}
+	dnssec-policy none;
+{% endif %}
+	auto-dnssec allow;
+{% else %}
+	dnssec-policy "{{ zone_info.dnssec_policy | default('generated') }}";
+{% endif %}
+{% else %}
+	file "{{ conf_dir }}/masters/signed/{{ zone_name }}.zone";
+{% endif %}
+{% else %}
+	file "{{ data_dir }}/masters/{{ zone_name }}.zone";
+{% endif %}
+};
+{% endfor %}
+

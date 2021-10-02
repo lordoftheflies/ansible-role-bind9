@@ -1,0 +1,85 @@
+---
+
+# the dnssec-policy method is unfortunately incomplete
+- name: "Ensure NSEC3 is enabled"
+  block:
+    - name: "Wait for the domain port to be open"
+      wait_for:
+        port: '53'
+        host: '127.0.0.1'
+        timeout: 300
+
+    - name: "Check if the zone has a NSEC3PARAM RR"
+      command: "host -t NSEC3PARAM {{ item.key }}"
+      changed_when: False
+      loop: "{{ q('dict', master_zones) }}"
+      loop_control:
+        label: "{{ item.key }}"
+      when: item.value.dnssec|default(False)|bool
+      register: _nsec3param_check
+      check_mode: no
+
+    - name: "Enable NSEC3 in zones missing it"
+      command: "rndc signing -nsec3param 1 0 10 auto {{ item.item.key }}"
+      loop: "{{ _nsec3param_check.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"
+      when: not item.skipped|default(False) and "has NSEC3PARAM record" not in item.stdout
+      changed_when: True
+  when: _bind_version is version_compare('9.16.10', '<')
+
+# DNSSEC Delegation Trust Maintenance (RFC 7344)
+
+- name: "Initialize list of DNSSEC children zones"
+  set_fact:
+    _dnssec_children_zones: []
+
+- name: "Setup children zones metadata"
+  include_tasks: dnssec_bind_rfc7344.yml
+  loop: "{{ q('dict', master_zones) }}"
+  loop_control:
+    label: "{{ parent_zone.key }}"
+    loop_var: parent_zone
+  when: parent_zone.value.dnssec|default(False)|bool and parent_zone.value.dnssec_children is defined
+
+- name: "Find past dssets"
+  find:
+    paths: "{{ data_dir }}/dssets"
+    file_type: file
+  register: _past_dssets
+
+- name: "Remove obsolete dssets"
+  file:
+    path: "{{ item.path }}"
+    state: absent
+  when: (item.path | basename) not in _dnssec_children_zones
+  loop: "{{ _past_dssets.files }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: "Enable DNSSEC Delegation Trust Maintenance (RFC 7344)"
+  block:
+
+    - name: "Install DNSSEC Delegation update script"
+      template:
+        src: dnssec_rfc7344_update
+        dest: /usr/local/sbin/
+        owner: root
+        group: root
+        mode: 0755
+
+    - name: "Install DNSSEC Delegation update crontab"
+      cron:
+        cron_file: "dnssec_rfc7344_update"
+        user: "{{ dns_usergroup }}"
+        minute: "1"
+        name: "DNSSEC Delegation Trust Maintenance"
+        job: /usr/local/sbin/dnssec_rfc7344_update
+  when: _dnssec_children_zones | length > 0
+
+- name: "Remove DNSSEC Delegation update crontab"
+  cron:
+    cron_file: "dnssec_rfc7344_update"
+    state: absent
+  when: _dnssec_children_zones | length == 0
+

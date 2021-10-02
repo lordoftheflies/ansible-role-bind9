@@ -1,0 +1,45 @@
+#!/bin/bash
+# Ansible managed
+
+zones_to_update=()
+
+for dsset in $(find /var/cache/bind/dssets/ -mindepth 1 -maxdepth 1 -type f)
+do
+    zone=$(basename $dsset)
+    parent_zone=$(echo $zone | cut -d. -f2-)
+
+    rm -f /var/cache/bind/masters/${parent_zone}.dnssec_children.new
+done
+
+for dsset in $(find /var/cache/bind/dssets/ -mindepth 1 -maxdepth 1 -type f)
+do
+    zone=$(basename $dsset)
+    parent_zone=$(echo $zone | cut -d. -f2-)
+
+    if [ ! -s $dsset ]; then
+        new_ds=$(dig +noall +answer $zone CDS | sed 's/CDS/DS/')
+        if [ -z "$new_ds" ]; then
+            echo "zone $zone has no CDS RR"
+            break
+        fi
+        echo $new_ds >$dsset
+
+    else
+        dig +dnssec +noall +answer $zone DNSKEY $zone CDNSKEY $zone CDS | dnssec-cds -i -f /dev/stdin -d $dsset $zone 2>/dev/null
+    fi
+
+    zones_to_update+=($parent_zone)
+    cat $dsset >> /var/cache/bind/masters/${parent_zone}.dnssec_children.new
+done
+
+for parent_zone in $(printf "%s\n" "${zones_to_update[@]}" | sort -u); do
+    if ! cmp -s /var/cache/bind/masters/${parent_zone}.dnssec_children.new /var/cache/bind/masters/${parent_zone}.dnssec_children; then
+        mv /var/cache/bind/masters/${parent_zone}.dnssec_children.new /var/cache/bind/masters/${parent_zone}.dnssec_children
+
+        serial=$(/usr/sbin/rndc zonestatus $parent_zone | grep "^serial:" | cut -d\  -f2)
+        new_serial=$((serial+1))
+        sed -i -r "s/\b(0*)${serial}(\s+;\s+serial)/\1${new_serial}\2/i" /etc/bind/masters/${parent_zone}.zone
+        /usr/sbin/rndc -q reload $parent_zone
+    fi
+done
+
