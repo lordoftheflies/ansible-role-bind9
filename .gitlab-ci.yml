@@ -23,6 +23,10 @@ cache:
     - .cache/pip
     - venv/
 
+stages:
+  - build
+  - test
+
 before_script:
   - python -V  # Print out python version for debugging
   - pip install virtualenv
@@ -32,6 +36,7 @@ before_script:
   - curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sh
 
 test:
+  stage: test
   script:
     - pip install -r requirements-test.txt
     - molecule test
@@ -50,6 +55,7 @@ test:
 
 
 pages:
+  stage: build
   script:
     - pip install -r requirements-doc.txt
     - cd doc ; make html
@@ -61,6 +67,7 @@ pages:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 publish:
+  stage: build
   variables:
     GALAXY_ROLE_NAME: $(echo "$CI_PROJECT_NAME" | tr '-' '_')
     GALAXY_ROLE_FULLNAME: "$GITLAB_USER_LOGIN.$GALAXY_ROLE_NAME"
