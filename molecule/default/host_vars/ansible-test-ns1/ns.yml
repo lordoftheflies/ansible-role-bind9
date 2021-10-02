@@ -1,0 +1,13 @@
+---
+server_groups:
+  ns2:
+    ips:
+      - "{{ hostvars['ansible-test-ns2'].ansible_default_ipv4.address }}"
+      - "{{ hostvars['ansible-test-ns2'].ansible_default_ipv6.address }}"
+master_zones:
+  'example.org':
+    transfer_groups:
+      - ns2
+recursion_allowed_groups:
+  - ns2
+

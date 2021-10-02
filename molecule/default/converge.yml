@@ -1,7 +1,17 @@
 ---
-- name: Converge
-  hosts: all
+
+- name: Install DNS Servers
+  hosts: ns_servers
   tasks:
-    - name: "Include ansible-role-bind9"
+    - name: Testing role
       include_role:
-        name: "ansible-role-bind9"
+        name: ansible-role-bind9
+    - name: install master zones
+      copy:
+        src: example.org.zone
+        dest: /etc/named/masters/
+        owner: root
+        group: "{{ dns_usergroup }}"
+        mode: 0640
+      notify: restart DNS system
+      when: inventory_hostname == 'ansible-test-ns1'

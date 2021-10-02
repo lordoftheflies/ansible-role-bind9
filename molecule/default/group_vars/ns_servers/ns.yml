@@ -1,0 +1,11 @@
+---
+platform_base:
+  docker:
+    exposed_ports:
+      - 53/udp
+      - 53/tcp
+keys:
+  testkey:
+    algorithm: hmac-sha512
+    secret: "v/3PavHSA4xspXJIPGfKVQB8qEXLJJrcwjYC1V4CURVnngRBkPxWY69O4x5nGXR9or0XSHYlIsn7HjpdU/yQvw=="
+

@@ -1,0 +1,11 @@
+$TTL 1D
+@				IN SOA		ns1.example.org. hostmaster.example.org. (
+						2018061901	; serial (YYYYMMDDRR)
+						3600		; Refresh
+						1800		; Retry
+						604800		; Timeout
+						86400 )		; Negative answer TTL
+                                IN NS           test
+
+test				IN A		127.0.0.1
+
