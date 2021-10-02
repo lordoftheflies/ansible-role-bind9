@@ -29,6 +29,7 @@ before_script:
   - virtualenv venv
   - source venv/bin/activate
   - pip install -r requirements.txt
+  - curl -s https://raw.githubusercontent.com/profclems/glab/trunk/scripts/install.sh | sudo sh
 
 test:
   script:
@@ -46,10 +47,29 @@ test:
 #       - dist/*.whl
 
 publish:
-  script:
-    - "ANSIBLE_GALAXY_NAME = $(echo \"$CI_PROJECT_ROOT_NAMESPACE.$CI_PROJECT_NAME\" | tr '-' '_')"
-    - "ansible-galaxy info $ANSIBLE_GALAXY_NAME | grep -E 'id: [0-9]' | awk {'print $2'}"
+  variables:
+    GALAXY_ROLE_NAME: $(echo "$CI_PROJECT_NAME" | tr '-' '_')
+    GALAXY_ROLE_FULLNAME: "$GITLAB_USER_NAME.$GALAXY_ROLE_NAME"
+    GALAXY_ROLE_ID: "ansible-galaxy info $ANSIBLE_GALAXY_NAME | grep -E 'id: [0-9]' | awk {'print $2'}"
+    BADGE_LINK_URL_GALAXY_ROLE: https://galaxy.ansible.com/$GITLAB_USER_NAME/$GALAXY_ROLE_NAME
+    BADGE_IMAGE_URL_GALAXY_ROLE: "https://img.shields.io/ansible/role/$GALAXY_ROLE_ID"
+    BADGE_LINK_URL_GALAXY_DOWNLOADS: https://galaxy.ansible.com/$GITLAB_USER_NAME/$GALAXY_ROLE_NAME
+    BADGE_IMAGE_URL_GALAXY_DOWNLOADS: "https://img.shields.io/ansible/role/d/$GALAXY_ROLE_ID"
+    BADGE_LINK_URL_GALAXY_SCORE: https://galaxy.ansible.com/$GITLAB_USER_NAME/$GALAXY_ROLE_NAME
+    BADGE_IMAGE_URL_GALAXY_SCORE: "https://img.shields.io/ansible/quality/$GALAXY_ROLE_ID"
+    GITLAB_API_BADGE_ENDPOINT: "https://gitlab.example.com/api/v4/projects/:id/badges"
+  script: |
+    echo "Ansible Galaxy contains role $GALAXY_ROLE_FULLNAME with id=$GALAXY_ROLE_ID"
+    echo "GALAXY_ROLE_FULLNAME=$GALAXY_ROLE_FULLNAME" >> galaxy.env
+    echo "GALAXY_ROLE_ID=$GALAXY_ROLE_ID" >> galaxy.env
+    curl --request POST --header "PRIVATE-TOKEN: $GITLAB_TOKEN" --data "link_url=$BADGE_LINK_URL_GALAXY_ROLE&image_url=BADGE_IMAGE_URL_GALAXY_ROLE" "$GITLAB_API_BADGE_ENDPOINT"
+    curl --request POST --header "PRIVATE-TOKEN: $GITLAB_TOKEN" --data "link_url=$BADGE_LINK_URL_GALAXY_DOWNLOADS&image_url=BADGE_IMAGE_URL_GALAXY_DOWNLOADS" "$GITLAB_API_BADGE_ENDPOINT"
+    curl --request POST --header "PRIVATE-TOKEN: $GITLAB_TOKEN" --data "link_url=$BADGE_LINK_URL_GALAXY_SCORE&image_url=BADGE_IMAGE_URL_GALAXY_SCORE" "$GITLAB_API_BADGE_ENDPOINT"
   allow_failure: true
+  when: manual
+  artifacts:
+    reports:
+      dotenv: galaxy.env
 
 
 pages:
