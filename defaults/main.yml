@@ -8,4 +8,3 @@ recursion_allowed_groups: []
 manage_firewall: True
 extra_includes: []
 options: []
-bind9_user: "{{ ansible_facts.ansible_become_user }}"

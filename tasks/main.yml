@@ -7,7 +7,7 @@
     - "{{ ansible_os_family }}.yml"
 
 - name: "Install packages"
-  become: true
+#  become: true
   package:
     name: "{{ package_list }}"
     state: present
@@ -16,29 +16,29 @@
  
 # TODO: remove when Bullseye is out
 - name: "Install packages (Ubuntu)"
-  become: true
+#  become: true
   package:
     name: "{{ package_list }}"
     state: present
   when: ansible_os_family == "Ubuntu"
 
-- name: "Retrieve bind9 version #1"
-  become: true
-  command: "named -v"
-  changed_when: false
-  register: _output_bind_version
-  check_mode: false
+# - name: "Retrieve bind9 version #1"
+# #  become: true
+#   command: "named -v"
+#   changed_when: false
+#   register: _output_bind_version
+#   check_mode: false
 
-- name: "Retrieve bind9 version #2"
-  set_fact:
-    _bind_version: "{{ _output_bind_version['stdout'].split(' ')[1].split('-')[0] }}"
+# - name: "Retrieve bind9 version #2"
+#   set_fact:
+#     _bind_version: "{{ _output_bind_version['stdout'].split(' ')[1].split('-')[0] }}"
 
-- name: "Retrieve bind9 version #3"
-  debug:
-    msg: "The detected Bind version is: {{ _bind_version }}"
+# - name: "Retrieve bind9 version #3"
+#   debug:
+#     msg: "The detected Bind version is: {{ _bind_version }}"
 
 - name: "Create base directories"
-  become: true
+#  become: true
   file:
     path: "{{ item.0 }}"
     state: directory
