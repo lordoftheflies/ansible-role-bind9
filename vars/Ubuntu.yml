@@ -6,7 +6,9 @@ package_list:
   - bind9
   - bind9-utils
   - bind9-host
-  - dnsutils
+  - bind9-dnsutils
+  - bind9-libs
+
 service_name: bind9
 conf_dir: /etc/bind
 main_conffile: "{{ conf_dir }}/named.conf"

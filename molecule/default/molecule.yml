@@ -50,5 +50,15 @@ provisioner:
     #  roles_path: "../../../"
     ssh_connection:
       pipelining: false
+  inventory:
+    host_vars:
+      ansible-test-ns1:
+        server_groups:
+          ns2:
+            key: testkey
+      ansible-test-ns2:
+        server_groups:
+          ns1:
+            key: testkey
 verifier:
   name: ansible

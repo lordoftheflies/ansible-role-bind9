@@ -51,6 +51,15 @@
     - ["{{ data_dir }}/dssets", '0770']
     - ["{{ log_dir }}", '0770']
 
+- name: "Create configuration directory"
+  become: true
+  file:
+    path: "{{ conf_dir  }}"
+    state: directory
+    owner: root
+    group: "{{ dns_usergroup }}"
+    mode: 0770
+
 # Bind is not always allowed to create files in /etc
 # in Debian the apparmor policy is against it
 # in RedHat SELinux also probably denies it
@@ -126,10 +135,11 @@
     owner: root
     group: "{{ dns_usergroup }}"
     mode: 0640
-    validate: "named-checkconf %s"
+    #validate: "named-checkconf %s"
   notify: restart DNS system
 
 - name: Enable DNS service
+  become: true
   service:
     name: "{{ service_name }}"
     enabled: yes

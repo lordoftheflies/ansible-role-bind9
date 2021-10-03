@@ -1,9 +1,10 @@
 ---
 
 - name: Enable DNS service
+  become: true
   service:
     name: "{{ service_name }}"
-    enabled: yes
+    enabled: true
     state: started
 
 - include_tasks: dnssec_bind_post.yml
